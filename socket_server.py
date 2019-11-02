@@ -8,22 +8,22 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     try:
         # Define que o servidor vai reaproveitar a conexão antiga do socket que utiliza a mesmo HOST e PORT
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.settimeout(60)
+
+        # sock.settimeout(60)
         # Liga o servidor
         sock.bind((HOST, PORT))
 
         # Habilita o servidor para aceitar conexões
         sock.listen(1)
 
-        print('Server is ready for connections')
+        while True:
 
-        while True and sock.gettimeout() > 0:
+            print('Waiting for a connection')
             # Recebe a conexão e endereço de cada conexão socket
             conn, addr = sock.accept()
 
-            print('Connection received from', addr[0])
-
-            with conn:
+            try:
+                print('Connection received from', addr[0])
                 # Decodifica a mensagem que veio do client
                 data = conn.recv(1024).decode()
 
@@ -71,20 +71,21 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                     # Manda a mensagem que a requisição foi feita sem nome do arquivo
                     conn.send("BAD_REQUEST, file is not specified\n".encode())
                     print('Bad request, file is not specified')
-
+            finally:
                 print('Connection to', addr[0], 'closed\n')
                 conn.close()
 
     except Exception as error:
         print('\nServer interrupted from error')
         print('Description error: ', error)
-        # Fecha o servidor socket
-        sock.close()
-        # Desliga o servidor socket
-        sock.shutdown(socket.SHUT_RDWR)
-        print('Server is down')
-        # Fecha o programa
-        sys.exit()
     # Trata caso o servidor seja fechado pelo o usuário
     except KeyboardInterrupt as error:
         print('\nProgram interrupted from owner')
+    finally:
+        # Desliga o servidor socket
+        sock.shutdown(socket.SHUT_RDWR)
+        # Fecha o servidor socket
+        sock.close()
+        print('Server is down')
+        # Fecha o programa
+        sys.exit()
